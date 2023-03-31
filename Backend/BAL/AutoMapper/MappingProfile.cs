@@ -11,6 +11,8 @@ namespace BAL
 			CreateMap<ApplicationUser, AuthModel>().ReverseMap();
 			CreateMap<ApplicationUserDto, ApplicationUser>().ReverseMap();
 			CreateMap<ApplicationUser, ReturnUsersDto>();
+			CreateMap<ThreeDModel, ThreeDModelDto>().ReverseMap();
+			CreateMap<CreateThreeDModelDto, ThreeDModel>().ReverseMap();
 		}
 	}
 }

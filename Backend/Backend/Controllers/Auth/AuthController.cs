@@ -56,7 +56,7 @@ public class AuthController : ControllerBase
 		if (result.HasErrors)
 			return BadRequest(new { errors = result.Errors });
 
-		return Ok(model);
+		return Ok(new { message = "Role Assigned Successfully" });
 	}
 
 	[Authorize(Roles = "Admin")]

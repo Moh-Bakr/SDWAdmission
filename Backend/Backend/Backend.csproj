@@ -44,4 +44,13 @@
     <Content Remove="C:\Users\Bakr\.nuget\packages\mysql.data.entityframework\8.0.32\contentFiles\any\netstandard2.1\web.config.transform" />
   </ItemGroup>
 
+  <ItemGroup>
+    <_ContentIncludedByDefault Remove="wwwroot\Uploads\b9ed6d43-41df-4742-8f53-9f10fca1250e\4942ee57-b6b5-4b65-aba7-11d799b590fb.PNG" />
+    <_ContentIncludedByDefault Remove="wwwroot\Uploads\b9ed6d43-41df-4742-8f53-9f10fca1250e\f7683d9c-115b-4e78-b857-90c227e63965.PNG" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="wwwroot\Uploads" />
+  </ItemGroup>
+
 </Project>
