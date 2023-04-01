@@ -81,11 +81,19 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
+var uploadsPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "Uploads");
+
+if (!Directory.Exists(uploadsPath))
+{
+	Directory.CreateDirectory(uploadsPath);
+}
+
 app.UseStaticFiles(new StaticFileOptions
 {
-	FileProvider = new PhysicalFileProvider(Path.Combine(app.Environment.ContentRootPath, "wwwroot", "Uploads")),
-	RequestPath = "/Uploads"
+	FileProvider = new PhysicalFileProvider(uploadsPath),
+	RequestPath = new PathString("/Uploads")
 });
+;
 
 // Configure the HTTP request pipeline.
 
