@@ -41,15 +41,31 @@ public class ThreeDModelFileManager : IThreeDModelFileManager
 
 	public async Task<string> SaveFile(IFormFile file, string directoryPath)
 	{
-		var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
-		var filePath = Path.Combine(directoryPath, fileName);
+		var fileName = Path.GetFileNameWithoutExtension(file.FileName);
+		var extension = Path.GetExtension(file.FileName);
+		var newFileName =
+			$"{DateTime.Now.ToString("yyyy_MM_dd_HH_mm_ss_fff")}_{Guid.NewGuid().ToString("N")
+				.Substring(0, 6)}_{fileName.Replace("-", "_")}{extension}";
+		var filePath = Path.Combine(directoryPath, newFileName);
+
 		using (var stream = new FileStream(filePath, FileMode.Create))
 		{
 			await file.CopyToAsync(stream);
 		}
 
-		return Path.Combine("/Uploads", Path.GetFileName(directoryPath), fileName).Replace("\\", "/");
+		return filePath;
 	}
+	// public async Task<string> SaveFile(IFormFile file, string directoryPath)
+	// {
+	// 	var fileName = Guid.NewGuid().ToString() + Path.GetExtension(file.FileName);
+	// 	var filePath = Path.Combine(directoryPath, fileName);
+	// 	using (var stream = new FileStream(filePath, FileMode.Create))
+	// 	{
+	// 		await file.CopyToAsync(stream);
+	// 	}
+	//
+	// 	return Path.Combine("/Uploads", Path.GetFileName(directoryPath), fileName).Replace("\\", "/");
+	// }
 
 	public string GetDirectoryPath(string filePath)
 	{

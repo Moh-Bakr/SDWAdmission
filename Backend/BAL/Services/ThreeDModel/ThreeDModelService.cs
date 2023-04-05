@@ -1,6 +1,8 @@
-﻿using AutoMapper;
+﻿using System.Reflection;
+using AutoMapper;
 using DAL;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 
 namespace BAL
@@ -50,13 +52,40 @@ namespace BAL
 
 			var directoryPath = _fileManager.CreateDirectory();
 
-			var photoFilePath = await _fileManager.SaveFile(dto.Photo, directoryPath);
-			model.PhotoPath = Path.Combine("/Uploads", Path.GetFileName(directoryPath), Path.GetFileName(photoFilePath))
-				.Replace("\\", "/");
+			// var photoFilePath = await _fileManager.SaveFile(dto.Photo, directoryPath);
+			// model.PhotoPath = Path.Combine("/Uploads", Path.GetFileName(directoryPath), Path.GetFileName(photoFilePath))
+			// 	.Replace("\\", "/");
+			//
+			// var modelFilePath = await _fileManager.SaveFile(dto.Model, directoryPath);
+			// model.ModelPath = Path.Combine("/Uploads", Path.GetFileName(directoryPath), Path.GetFileName(modelFilePath))
+			// 	.Replace("\\", "/");
+			var properties = typeof(CreateThreeDModelDto).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-			var modelFilePath = await _fileManager.SaveFile(dto.Model, directoryPath);
-			model.ModelPath = Path.Combine("/Uploads", Path.GetFileName(directoryPath), Path.GetFileName(modelFilePath))
-				.Replace("\\", "/");
+			foreach (var property in properties)
+			{
+				var value = property.GetValue(dto);
+
+				if (value != null)
+				{
+					if (value is IFormFile file)
+					{
+						var filePath = await _fileManager.SaveFile(file, directoryPath);
+						var propertyName = property.Name;
+						var propertyToUpdate = typeof(ThreeDModel).GetProperty(propertyName);
+						var updatedFilePath =
+							Path.Combine("/Uploads", Path.GetFileName(directoryPath), Path.GetFileName(filePath))
+								.Replace("\\", "/");
+						propertyToUpdate.SetValue(model, updatedFilePath);
+					}
+					else
+					{
+						var stringValue = value?.ToString();
+						var propertyName = property.Name;
+						var propertyToUpdate = typeof(ThreeDModel).GetProperty(propertyName);
+						propertyToUpdate.SetValue(model, stringValue);
+					}
+				}
+			}
 
 			_dbContext.ThreeDModels.Add(model);
 			return await _dbContext.SaveChangesAsync();
@@ -71,35 +100,69 @@ namespace BAL
 				return false;
 			}
 
-			_mapper.Map(dto, model);
+			// var ThreeModel = _mapper.Map<ThreeDModel>(dto);
 
 			var directoryPath = _fileManager.GetDirectoryPath(model.PhotoPath);
-			if (!Directory.Exists(directoryPath))
-			{
-				Directory.CreateDirectory(directoryPath);
-			}
+			var properties = typeof(CreateThreeDModelDto).GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-			if (dto.Photo != null)
+			foreach (var property in properties)
 			{
-				var oldPhotoFilePath = _fileManager.GetFilePath(model.PhotoPath);
-				if (File.Exists(oldPhotoFilePath))
+				var value = property.GetValue(model);
+
+				if (value != null)
 				{
-					File.Delete(oldPhotoFilePath);
-				}
+					if (value is IFormFile file)
+					{
+						var filePath = await _fileManager.SaveFile(file, directoryPath);
+						var propertyName = property.Name;
+						var propertyToUpdate = typeof(ThreeDModel).GetProperty(propertyName);
+						var oldFilePath = (string)propertyToUpdate.GetValue(model);
 
-				model.PhotoPath = await _fileManager.SaveFile(dto.Photo, directoryPath);
+						if (!string.IsNullOrEmpty(oldFilePath))
+						{
+							_fileManager.DeleteFile(oldFilePath);
+						}
+
+						var updatedFilePath =
+							Path.Combine("/Papers", Path.GetFileName(directoryPath), Path.GetFileName(filePath))
+								.Replace("\\", "/");
+						propertyToUpdate.SetValue(model, updatedFilePath);
+					}
+					else if (value is DateTime date)
+					{
+						var propertyName = property.Name;
+						var propertyToUpdate = typeof(ThreeDModel).GetProperty(propertyName);
+						propertyToUpdate.SetValue(model, date);
+					}
+				}
 			}
 
-			if (dto.Model != null)
-			{
-				var oldModelFilePath = _fileManager.GetFilePath(model.ModelPath);
-				if (File.Exists(oldModelFilePath))
-				{
-					File.Delete(oldModelFilePath);
-				}
-
-				model.ModelPath = await _fileManager.SaveFile(dto.Model, directoryPath);
-			}
+			// if (!Directory.Exists(directoryPath))
+			// {
+			// 	Directory.CreateDirectory(directoryPath);
+			// }
+			//
+			// if (dto.Photo != null)
+			// {
+			// 	var oldPhotoFilePath = _fileManager.GetFilePath(model.PhotoPath);
+			// 	if (File.Exists(oldPhotoFilePath))
+			// 	{
+			// 		File.Delete(oldPhotoFilePath);
+			// 	}
+			//
+			// 	model.PhotoPath = await _fileManager.SaveFile(dto.Photo, directoryPath);
+			// }
+			//
+			// if (dto.Model != null)
+			// {
+			// 	var oldModelFilePath = _fileManager.GetFilePath(model.ModelPath);
+			// 	if (File.Exists(oldModelFilePath))
+			// 	{
+			// 		File.Delete(oldModelFilePath);
+			// 	}
+			//
+			// 	model.ModelPath = await _fileManager.SaveFile(dto.Model, directoryPath);
+			// }
 
 			_dbContext.Entry(model).State = EntityState.Modified;
 			await _dbContext.SaveChangesAsync();
